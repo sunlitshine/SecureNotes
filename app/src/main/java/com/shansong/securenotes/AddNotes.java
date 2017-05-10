@@ -12,7 +12,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 
-import com.shansong.securenotes.data.SecureNote;
+import com.shansong.securenotes.models.SecureNote;
 import com.shansong.securenotes.database.DatabaseHelper;
 import com.shansong.securenotes.utils.APPEnv;
 
@@ -50,7 +50,7 @@ public class AddNotes extends AppCompatActivity {
                 String title = mTitleEditText.getText().toString();
                 if (TextUtils.isEmpty(title)) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(AddNotes.this)
-                            .setMessage("You have not entered a Note title")
+                            .setMessage("You have not entered a Note mTitleView")
                             .setCancelable(false)
                             .setPositiveButton("OK", null);
                     AlertDialog ad = builder.create();

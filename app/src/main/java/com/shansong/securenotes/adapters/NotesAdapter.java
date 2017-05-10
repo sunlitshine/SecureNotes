@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.shansong.securenotes.R;
-import com.shansong.securenotes.data.SecureNote;
+import com.shansong.securenotes.models.SecureNote;
 
 import java.util.List;
 
@@ -15,21 +15,21 @@ import java.util.List;
  * Created by bolorundurowb on 16-Jul-16.
  */
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.MyViewHolder> {
-    private List<SecureNote> notesList;
+    private List<SecureNote> mNoteList;
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
-        public TextView title, content, date;
+        public TextView mTitleView;
+        public TextView mDateView;
 
         public MyViewHolder(View view){
             super(view);
-            title = (TextView) view.findViewById(R.id.lbl_title);
-            content = (TextView) view.findViewById(R.id.lbl_details);
-            date = (TextView) view.findViewById(R.id.lbl_date);
+            mTitleView = (TextView) view.findViewById(R.id.lbl_title);
+            mDateView = (TextView) view.findViewById(R.id.lbl_date);
         }
     }
 
     public NotesAdapter(List<SecureNote> noteList) {
-        this.notesList = noteList;
+        this.mNoteList = noteList;
     }
 
     @Override
@@ -40,18 +40,13 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.MyViewHolder
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        SecureNote note = notesList.get(position);
-        holder.title.setText(note.getTitle().toUpperCase());
-        holder.content.setText(note.getContent());
-
-//        DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
-//        String reportDate = df.format(note.getDateTime());
-
-        holder.date.setText(note.getDateTime());
+        SecureNote note = mNoteList.get(position);
+        holder.mTitleView.setText(note.getTitle().toUpperCase());
+        holder.mDateView.setText(note.getDateTime());
     }
 
     @Override
     public int getItemCount(){
-        return  notesList.size();
+        return  mNoteList.size();
     }
 }

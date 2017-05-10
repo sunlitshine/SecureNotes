@@ -1,4 +1,4 @@
-package com.shansong.securenotes.data;
+package com.shansong.securenotes.models;
 
 
 /**

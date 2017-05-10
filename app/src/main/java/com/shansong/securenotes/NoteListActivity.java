@@ -19,9 +19,9 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.shansong.securenotes.adapters.NotesAdapter;
-import com.shansong.securenotes.data.SecureNote;
 import com.shansong.securenotes.database.DatabaseHelper;
 import com.shansong.securenotes.helpers.DividerItemDecoration;
+import com.shansong.securenotes.models.SecureNote;
 import com.shansong.securenotes.utils.APPEnv;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public class NoteListActivity extends AppCompatActivity implements View.OnClickL
 
     private List<SecureNote> notesList  = new ArrayList<SecureNote>();
     private RecyclerView noteListView;
-    private NotesAdapter nAdapter;
+    private NotesAdapter mAdapter;
 
     private DatabaseHelper mDbHelper;
     private String currentUser;
@@ -55,77 +55,42 @@ public class NoteListActivity extends AppCompatActivity implements View.OnClickL
         currentUser = mDbHelper.getCurrentUserName();
 
         //get the secure notes belonging to this user
-        notesList = mDbHelper.getSecureNotesList(currentUser);
+        notesList = mDbHelper.getSecureNotesList();
         if(APPEnv.DEBUG){
 
             Log.d(TAG, "Total number of notes: "+notesList.size());
 
-           for(SecureNote note: notesList){
-               Log.d(TAG, "------------------------------");
-               Log.d(TAG, "note.id: "+note.getId());
-               Log.d(TAG, "note.getTitle: "+note.getTitle());
-               Log.d(TAG, "note.getContent: "+note.getContent());
-               Log.d(TAG, "note.getDateTime: "+note.getDateTime());
-               Log.d(TAG, "note.getUserName: "+note.getUserName());
-           }
+            for(SecureNote note: notesList){
+                Log.d(TAG, "------------------------------");
+                printNoteDetails(note);
+            }
 
         }
-
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_add);
         fab.setOnClickListener(this);
 
         noteListView = (RecyclerView) findViewById(R.id.lst_notes);
 
-        nAdapter = new NotesAdapter(notesList);
+        mAdapter = new NotesAdapter(notesList);
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
         noteListView.setLayoutManager(layoutManager);
         noteListView.setItemAnimator(new DefaultItemAnimator());
         noteListView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
-        noteListView.setAdapter(nAdapter);
+        noteListView.setAdapter(mAdapter);
 
         noteListView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), noteListView, new ClickListener() {
             @Override
             public void onClick(View view, int position) {
 
-                if(APPEnv.DEBUG){
-                    Log.d(TAG, "position for the item: "+ position);
-                }
-                SecureNote note = notesList.get(position);
-
-                if(APPEnv.DEBUG){
-                    if(note == null){
-                        Log.d(TAG, "Secure note is null");
-                    }else{
-                        Log.d(TAG, "note.id: "+note.getId());
-                        Log.d(TAG, "note.getTitle: "+note.getTitle());
-                        Log.d(TAG, "note.getContent: "+note.getContent());
-                        Log.d(TAG, "note.getDateTime: "+note.getDateTime());
-                    }
-
-                }
-                //
-                Intent intent = new Intent(getApplicationContext(), ViewNote.class);
-
-                intent.putExtra("Note", note.getId());
-                startActivity(intent);
+                viewNoteDetails(position);
             }
 
             @Override
-            public void onLongClick(View view, int position) {
+            public void onLongClick(View view, final int position) {
+                deleteNote(position);
 
-                final int noteId = notesList.get(position).getId();
-                AlertDialog.Builder builder = new AlertDialog.Builder(NoteListActivity.this);
-                builder.setTitle("Delete");
-                builder.setMessage("Are you sure you want to delete ? ");
-                builder.setPositiveButton("Yes", new AlertDialog.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        mDbHelper.deleteSecureNote(noteId);
-                        nAdapter.notifyDataSetChanged();
-                    }});
-                builder.setNegativeButton("Cancel", null);
-                builder.show();
             }
         }));
     }
@@ -220,4 +185,55 @@ public class NoteListActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    private void viewNoteDetails(final int position){
+
+        if(APPEnv.DEBUG){
+            Log.d(TAG, "View note at position: "+ position);
+        }
+        SecureNote note = notesList.get(position);
+
+        if(APPEnv.DEBUG){
+            printNoteDetails(note);
+        }
+
+        Intent intent = new Intent(getApplicationContext(), ViewNote.class);
+
+        intent.putExtra("Note", note.getId());
+        startActivity(intent);
+    }
+
+
+    private void deleteNote(final int position){
+
+        if(APPEnv.DEBUG){
+            Log.d(TAG, "Delete note at position: "+ position);
+        }
+
+        final int noteId = notesList.get(position).getId();
+        AlertDialog.Builder builder = new AlertDialog.Builder(NoteListActivity.this);
+        builder.setTitle("Delete");
+        builder.setMessage("Are you sure you want to delete ? ");
+        builder.setPositiveButton("Yes", new AlertDialog.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                mDbHelper.deleteSecureNote(noteId);
+                notesList.remove(position);
+
+                mAdapter.notifyDataSetChanged();
+            }});
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void printNoteDetails(final SecureNote note){
+        if(note == null){
+            Log.d(TAG, "Secure note is null");
+        }else{
+            Log.d(TAG, "note.id: "+note.getId());
+            Log.d(TAG, "note.getTitle: "+note.getTitle());
+            Log.d(TAG, "note.getContent: "+note.getContent());
+            Log.d(TAG, "note.getDateTime: "+note.getDateTime());
+            Log.d(TAG, "note.getUserName: "+note.getUserName());
+
+        }
+    }
 }

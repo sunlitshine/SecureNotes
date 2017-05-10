@@ -10,6 +10,7 @@ android {
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+
     }
     buildTypes {
         release {
@@ -17,6 +18,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
 }
 
 dependencies {
@@ -26,5 +28,5 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:25.0.0'
     compile 'de.hdodenhof:circleimageview:2.1.0'
     compile 'net.zetetic:android-database-sqlcipher:3.5.7@aar'
-    compile 'com.android.support.constraint:constraint-layout:+'
+
 }

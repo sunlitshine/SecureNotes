@@ -15,7 +15,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.shansong.securenotes.data.UserInfo;
+import com.shansong.securenotes.models.UserInfo;
 import com.shansong.securenotes.database.DatabaseHelper;
 import com.shansong.securenotes.utils.APPEnv;
 

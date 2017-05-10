@@ -4,8 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.util.Log;
 
-import com.shansong.securenotes.data.SecureNote;
-import com.shansong.securenotes.data.UserInfo;
+import com.shansong.securenotes.models.SecureNote;
+import com.shansong.securenotes.models.UserInfo;
 import com.shansong.securenotes.utils.APPEnv;
 
 import net.sqlcipher.Cursor;
@@ -19,10 +19,10 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Created by sunshine on 7/5/17.
+ * A database helper class to manage the database CRUP related operations
  */
 
-public class DatabaseHelper extends SQLiteOpenHelper {
+public final class DatabaseHelper extends SQLiteOpenHelper {
 
     private final static String TAG = DatabaseHelper.class.getName();
 
@@ -34,14 +34,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     //Database Name
     private static final String CONSTANT_DATABASE_NAME = "SecureNotesDb";
 
-    //TODO
-    /**
-     *
-     * The first time you create the database you have to create a random mPassword.
-     You store this mPassword in the Keystore.
-     Whenever you open the app you read the mPassword from the keystore and use it for connecting to the database.
-     */
-    private static String mPassword ="1234";
+    private static Context mContext;
 
     //Table names
     private static final String S_TABLE_USER_INFO_NAME = "__1";
@@ -79,12 +72,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public static DatabaseHelper getInstance(final Context context){
         if(instance ==null){
+            mContext = context;
             instance = new DatabaseHelper(context.getApplicationContext());
         }
         return instance;
     }
 
-    public DatabaseHelper(final Context context){
+    private DatabaseHelper(final Context context){
         super(context, CONSTANT_DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -115,15 +109,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * Add an item in the specific table
-     * @param values
-     * @param tableName
+     * @param tableName table name
+     * @param values values to be updated
      */
-    public long createItem(final String tableName, final ContentValues values ){
+    private long createItem(final String tableName, final ContentValues values ){
 
         if(APPEnv.DEBUG){
             Log.d(TAG, "DatabaseHelper - [createItem]");
         }
-        SQLiteDatabase db = this.getWritableDatabase(mPassword);
+        SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
 
         //insert row
         return db.insert(tableName, null, values);
@@ -132,34 +126,33 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * Delete an item from the SQLiteDatabse with the given unique key
-     * @param tableName
-     * @param uniqueKey
-     * @return
+     * @param tableName table name
+     * @param uniqueKey row id
      */
 
-    public int deleteItem(final String tableName,final long uniqueKey){
+    private void deleteItem(final String tableName,final long uniqueKey){
 
         if(APPEnv.DEBUG){
             Log.d(TAG, "DatabaseHelper - [deleteItem]");
         }
-        SQLiteDatabase db = this.getWritableDatabase(mPassword);
 
-        return db.delete(tableName, KEY_ID + " = ?",
+        SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
+
+        db.delete(tableName, KEY_ID + " = ?",
                 new String[] { String.valueOf(uniqueKey) });
     }
 
     /**
      * Delete all the items in the given table
      *
-     * @param tableName
-     * @return
+     * @param tableName the name of the table
      */
-    public int deleteAll(final String tableName){
+    private void deleteAll(final String tableName){
         if(APPEnv.DEBUG){
             Log.d(TAG, "DatabaseHelper - [deleteAll]");
         }
-        SQLiteDatabase db = this.getWritableDatabase(mPassword);
-        return db.delete(tableName, null, null);
+        SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
+        db.delete(tableName, null, null);
     }
 
 
@@ -171,7 +164,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if(APPEnv.DEBUG){
             Log.d(TAG, "DatabaseHelper - [closeDB]");
         }
-        SQLiteDatabase db = this.getReadableDatabase(mPassword);
+        SQLiteDatabase db = this.getReadableDatabase(getSecurePassword());
         if (db != null && db.isOpen())
             db.close();
     }
@@ -179,7 +172,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /**
      * Get datetime
      * */
-    public String getDateTime() {
+    private String getDateTime() {
         if(APPEnv.DEBUG){
             Log.d(TAG, "DatabaseHelper - [getDateTime]");
         }
@@ -190,10 +183,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 
-    public void setDatabasePassword(final String dbPW){
-        this.mPassword = dbPW;
-
-    }
 
 
     //-----------------------------User Info related functions --------------------------------/
@@ -204,7 +193,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      */
     public long createUser(final UserInfo userInfo) {
 
-        final boolean ifExists = checkIfUserExists(userInfo.getUserName());
+        final String userName = userInfo.getUserName();
+
+        final boolean ifExists = checkIfUserExists(userName);
 
         if(ifExists){
             return -1; //indicates that cannot create the user
@@ -212,7 +203,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             //if the user does not exist and after the user is created, it will auto update the user login state and
             // log in the user, so the state is changed to logged in automatically
             ContentValues values = new ContentValues();
-            values.put(KEY_USERNAME, userInfo.getUserName());
+            values.put(KEY_USERNAME, userName);
             values.put(KEY_PASSWORD, userInfo.getPassword());
             values.put(KEY_IS_LOGGEDIN, 1);
 
@@ -223,23 +214,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * Get the username of the current logged in user
-     * @return
+     * @return the current username
      */
     public String getCurrentUserName(){
         String userName = "";
         Cursor cursor = null;
 
         try{
-//            final String selectQuery = "SELECT * FROM " + S_TABLE_USER_INFO_NAME +;
-
             final String selectQuery = "SELECT " + KEY_USERNAME + " FROM " + S_TABLE_USER_INFO_NAME
                     +" WHERE "+ KEY_IS_LOGGEDIN +"=" + 1;
 
             if(APPEnv.DEBUG){
                 Log.i(TAG, "getCurrentUserName SQL Command: "+ selectQuery);
             }
-            //TODO Secure the mPassword
-            SQLiteDatabase db = this.getReadableDatabase(mPassword);
+
+            SQLiteDatabase db = this.getReadableDatabase(getSecurePassword());
             cursor = db.rawQuery(selectQuery, null);
 
             if(cursor!=null && cursor.getCount()>0){
@@ -271,13 +260,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * Verify the mPassword for login.
      */
     public boolean verifyPassword(final String userName, final String password ) {
-        //TODO find a secure way for the mPassword
         boolean isSuccess = false;
         Cursor cursor = null;
         try {
             if(checkIfUserExists(userName)){
 
-                SQLiteDatabase db = this.getWritableDatabase(DatabaseHelper.mPassword);
+                SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
 
                 //get the pw for the specific user
                 final String selectQuery = "SELECT " + KEY_PASSWORD + " FROM " + S_TABLE_USER_INFO_NAME
@@ -314,9 +302,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * Logout user
      */
     public void logOutUser(final String userName ) {
-        //TODO find a secure way for the mPassword
 
-        SQLiteDatabase db = this.getWritableDatabase(mPassword);
+        SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
 
         if(checkIfUserExists(userName)){
             ContentValues values = new ContentValues();
@@ -328,50 +315,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     /**
-     * Get log in state for a specific user
-     */
-    public boolean getLoggedInState(final String userName) {
-
-        boolean isLoggedin = false;
-        Cursor cursor = null;
-
-        try{
-            String selectQuery = "SELECT  * FROM " + S_TABLE_USER_INFO_NAME + " WHERE "
-                    + KEY_USERNAME + "=" + "'"+userName+"'";
-
-            if(APPEnv.DEBUG){
-                Log.e(TAG, "getLoggedInState SQL Command; "+ selectQuery);
-            }
-
-
-            SQLiteDatabase db = this.getReadableDatabase(mPassword);
-            cursor = db.rawQuery(selectQuery, null);
-
-            if (cursor != null && cursor.getCount()>0) {
-                cursor.moveToFirst();
-            }
-
-            cursor.close();
-
-            isLoggedin = (cursor.getInt(cursor.getColumnIndex(KEY_IS_LOGGEDIN)) == 1)? true : false;
-
-        }finally {
-            if(cursor != null){
-                cursor.close();
-            }
-        }
-
-        if(APPEnv.DEBUG){
-            Log.d(TAG, "User "+ userName+" loggedin : "+ isLoggedin);
-        }
-        return isLoggedin;
-    }
-
-
-    /**
      * Check if user exists
      */
-    public boolean checkIfUserExists(final String userName) {
+    private boolean checkIfUserExists(final String userName) {
         if(APPEnv.DEBUG){
             Log.d(TAG, "[checkIfUserExists] for user:"+ userName);
         }
@@ -386,7 +332,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 Log.d(TAG, "SQL Command; "+ selectQuery);
             }
 
-            SQLiteDatabase db = this.getReadableDatabase(mPassword);
+            SQLiteDatabase db = this.getReadableDatabase(getSecurePassword());
             cursor = db.rawQuery(selectQuery, null);
 
             if (cursor != null && cursor.getCount() > 0) {
@@ -447,7 +393,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 Log.e(TAG, "GetSecureNote SQL Command: "+ selectQuery);
             }
 
-            SQLiteDatabase db = this.getReadableDatabase(mPassword);
+            SQLiteDatabase db = this.getReadableDatabase(getSecurePassword());
             cursor = db.rawQuery(selectQuery, null);
 
             if (cursor != null && cursor.getCount()>0) {
@@ -457,7 +403,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 note.setTitle(cursor.getString(cursor.getColumnIndex(KEY_TITLE)));
                 note.setContent(cursor.getString(cursor.getColumnIndex(KEY_CONTENT)));
                 note.setDateTime(cursor.getString(cursor.getColumnIndex(KEY_CREATED_AT)));
-                note.setContent(cursor.getString(cursor.getColumnIndex(KEY_USERNAME)));
+                note.setUserName(cursor.getString(cursor.getColumnIndex(KEY_USERNAME)));
             }else{
                 Log.d(TAG, "No secure note found for this ID");
             }
@@ -476,7 +422,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * Update a secure note tile/content/datetime. The other fields are not updatable
      */
     public int updateSecureNote(final SecureNote note) {
-        SQLiteDatabase db = this.getWritableDatabase(mPassword);
+
+        if(APPEnv.DEBUG){
+            Log.i(TAG, "Update secure notes for  "+ note.getId());
+        }
+        SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
 
         ContentValues values = new ContentValues();
         //the username should remain the same, the updatable fields are as follows
@@ -508,8 +458,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /**
      * Get all secure notes
      * */
-    public List<SecureNote> getSecureNotesList(final String currentUser) {
-        List<SecureNote> secureNotes = new ArrayList<SecureNote>();
+    public List<SecureNote> getSecureNotesList() {
+        final String currentUser = getCurrentUserName();
+        List<SecureNote> secureNotes = new ArrayList<>();
         Cursor cursor = null;
 
         try{
@@ -520,7 +471,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 Log.i(TAG, "getSecureNotesList SQL Command; "+ selectQuery);
             }
 
-            SQLiteDatabase db = this.getReadableDatabase(mPassword);
+            SQLiteDatabase db = this.getReadableDatabase(getSecurePassword());
             cursor = db.rawQuery(selectQuery, null);
 
             if(cursor!=null){
@@ -549,11 +500,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     /**
-     * Get the secure note title list
+     * Get the secure note mTitleView list
      * */
-    public List<String> getSecureNotesTitleList(final String currentUser) {
+    public List<String> getSecureNotesTitleList() {
 
-        List<String> titleList = new ArrayList<String>();
+        final String currentUser= getCurrentUserName();
+
+        List<String> titleList = new ArrayList<>();
         Cursor cursor = null;
 
         try{
@@ -564,7 +517,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 Log.i(TAG, "getSecureNotesTitleList SQL Command; "+ selectQuery);
             }
 
-            SQLiteDatabase db = this.getReadableDatabase(mPassword);
+            SQLiteDatabase db = this.getReadableDatabase(getSecurePassword());
             cursor = db.rawQuery(selectQuery, null);
 
             if(cursor!=null){
@@ -572,7 +525,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 if (cursor.moveToFirst()) {
                     do {
                         String title = cursor.getString(cursor.getColumnIndex(KEY_TITLE));
-                        // adding to title list
+                        // adding to mTitleView list
                         titleList.add(title);
                     } while (cursor.moveToNext());
                 }
@@ -585,6 +538,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         return titleList;
     }
+    // loading native module/lib
+    static {
+        try {
+            if(APPEnv.DEBUG) {
+                Log.i(TAG, "Load securepassword native lib");
+            }
+            System.loadLibrary("securepassword");
+        } catch (UnsatisfiedLinkError ule) {
+            if(APPEnv.DEBUG) {
+                Log.e(TAG, "WARNING: Could not load native library: " + ule.getMessage());
+            }
+        }
+    }
 
 
+    /**
+     * Get the password for the database
+     * @return the secure password
+     */
+    private String getSecurePassword(){
+        final PasswordManager pwManger = PasswordManager.getInstance(mContext);
+        return pwManger.getSecurePassword();
+    }
 }

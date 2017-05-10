@@ -229,7 +229,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
                 startActivity(intent);
                 finish();
             } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));//TODO fintune
+                mPasswordView.setError(getString(R.string.error_incorrect_user));
                 mPasswordView.requestFocus();
             }
         }
