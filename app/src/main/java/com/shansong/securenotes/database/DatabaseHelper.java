@@ -38,7 +38,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
     //Table names
     private static final String S_TABLE_USER_INFO_NAME = "__1";
-    private static final String S_TABLE_SECURE_NOTES_NAME = "__2";
+    public static final String S_TABLE_SECURE_NOTES_NAME = "__2";//this is public, because it is used for the content provider
 
     // Common column names
     private static final String KEY_USERNAME = "username";
@@ -557,7 +557,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
      * Get the password for the database
      * @return the secure password
      */
-    private String getSecurePassword(){
+    public String getSecurePassword(){
         final PasswordManager pwManger = PasswordManager.getInstance(mContext);
         return pwManger.getSecurePassword();
     }

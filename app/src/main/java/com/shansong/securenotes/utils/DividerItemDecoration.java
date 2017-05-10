@@ -1,4 +1,4 @@
-package com.shansong.securenotes.helpers;
+package com.shansong.securenotes.utils;
 
 import android.content.Context;
 import android.content.res.TypedArray;

@@ -1,4 +1,4 @@
-package com.shansong.securenotes;
+package com.shansong.securenotes.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -14,17 +14,21 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
-import com.shansong.securenotes.models.UserInfo;
+import com.shansong.securenotes.R;
 import com.shansong.securenotes.database.DatabaseHelper;
 import com.shansong.securenotes.utils.APPEnv;
 
-/**
- * A login screen that offers registration.
- */
-public class RegisterActivity extends AppCompatActivity {
+import net.sqlcipher.database.SQLiteDatabase;
 
-    private static final String TAG = RegisterActivity.class.getName();
+/**
+ * A login screen that offers login via usernmae/password.
+ */
+public class LoginActivity extends AppCompatActivity implements OnClickListener {
+
+    private final static String TAG = LoginActivity.class.getName();
+
 
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -33,97 +37,105 @@ public class RegisterActivity extends AppCompatActivity {
 
     // UI references.
     private EditText mUserNameView;
-    private EditText mPWView;
-    private EditText mConfirmPWView;
+    private EditText mPasswordView;
     private View mProgressView;
-    private View mRegisterFormView;
+    private View mLoginFormView;
+    private TextView mRegsiterView;
 
     private DatabaseHelper mDbHelper;
-
-    private UserInfo user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);
+        setContentView(R.layout.activity_login);
+        if(APPEnv.DEBUG){
+            Log.d(TAG, "LoginActivity - onCreate()");
+        }
 
+        //load sqlcipher native libraries
+        SQLiteDatabase.loadLibs(this);
         mDbHelper = DatabaseHelper.getInstance(getApplicationContext());
 
-        setupActionBar();
+        final String activeUser= mDbHelper.getCurrentUserName();
+
+        if(!TextUtils.isEmpty(activeUser)){//there is active user
+
+            Intent intent = new Intent(getApplicationContext(), NoteListActivity.class);
+            startActivity(intent);
+            finish();
+        }
+
+
         // Set up the login form.
         mUserNameView = (EditText) findViewById(R.id.username);
+        mPasswordView = (EditText) findViewById(R.id.password);
 
-        mPWView = (EditText) findViewById(R.id.password);
+        Button mLoginBtn = (Button) findViewById(R.id.login_button);
+        mLoginBtn.setOnClickListener(this);
 
-        mConfirmPWView = (EditText) findViewById(R.id.confirmPassword);
+        mLoginFormView = findViewById(R.id.login_form);
+        mProgressView = findViewById(R.id.login_progress);
 
-        Button mRegisterBtn = (Button) findViewById(R.id.register_button);
-        mRegisterBtn.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                register();
-            }
-        });
+        mRegsiterView = (TextView)findViewById(R.id.link_to_register);
+        mRegsiterView.setOnClickListener(this);
 
-        mRegisterFormView = findViewById(R.id.register_form);
-        mProgressView = findViewById(R.id.register_progress);
     }
 
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
 
-    /**
-     * Set up the {@link android.app.ActionBar}, if the API is available.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private void setupActionBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            // Show the Up button in the action bar.
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            case R.id.login_button:
+                performLogin();
+                break;
+
+            case R.id.link_to_register:
+                Intent intent = new Intent(getApplicationContext(), RegisterActivity.class);
+                startActivity(intent);
+                finish();
+                break;
+
+            default:
+                //do nothing
+                break;
         }
     }
 
     /**
-     * Attempts to register the account specified by the register form.
-     * If there are form errors the errors are presented and no actual register attempt is made.
+     * Attempts to sign in the account specified by the login form.
+     * If there are form errors (invalid username, missing fields, etc.), the
+     * errors are presented and no actual login attempt is made.
      */
-    private void register() {
+    private void performLogin() {
         if (mAuthTask != null) {
             return;
         }
 
         // Reset errors.
         mUserNameView.setError(null);
-        mPWView.setError(null);
-        mConfirmPWView.setError(null);
+        mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String userName = mUserNameView.getText().toString();
-        String password = mPWView.getText().toString();
-        String confirmPW = mConfirmPWView.getText().toString();
+        final String username = mUserNameView.getText().toString();
+        final String password = mPasswordView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
 
-        // Check for a valid password, if the user entered one.
-        if (!isPasswordValid(password)) {
-            mPWView.setError(getString(R.string.error_invalid_password));
-            focusView = mPWView;
-            cancel = true;
-        }else if (!isPasswordValid(confirmPW)) {
-            mConfirmPWView.setError(getString(R.string.error_invalid_password));
-            focusView = mConfirmPWView;
-            cancel = true;
-        }else if(!password.equals(confirmPW)){
-            mPWView.setError(getString(R.string.error_mismatch_password));
-            focusView = mPWView;
-            cancel = true;
-        }
-
-        // Check for a valid username .
-        if (TextUtils.isEmpty(userName)) {
+        // Check for a valid email address.
+        if (TextUtils.isEmpty(username)) {
             mUserNameView.setError(getString(R.string.error_field_required));
             focusView = mUserNameView;
             cancel = true;
         }
+
+        // Check for a valid password, if the user entered one.
+        if ( !isPasswordValid(password)) {
+            mPasswordView.setError(getString(R.string.error_invalid_password));
+            focusView = mPasswordView;
+            cancel = true;
+        }
+
 
         if (cancel) {
             // There was an error; don't attempt login and focus the first
@@ -131,10 +143,9 @@ public class RegisterActivity extends AppCompatActivity {
             focusView.requestFocus();
         } else {
             // Show a progress spinner, and kick off a background task to
-            // perform the user register attempt.
-
+            // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(userName, password);
+            mAuthTask = new UserLoginTask(username, password);
             mAuthTask.execute((Void) null);
         }
     }
@@ -160,12 +171,12 @@ public class RegisterActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            mRegisterFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mRegisterFormView.animate().setDuration(shortAnimTime).alpha(
+            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
                     show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mRegisterFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
                 }
             });
 
@@ -181,9 +192,12 @@ public class RegisterActivity extends AppCompatActivity {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mRegisterFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
     }
+
+
+
 
     /**
      * Represents an asynchronous login/registration task used to authenticate
@@ -194,24 +208,16 @@ public class RegisterActivity extends AppCompatActivity {
         private final String mUserName;
         private final String mPassword;
 
-        UserLoginTask(String userName, String password) {
-            this.mUserName = userName;
-            this.mPassword = password;
+        UserLoginTask(String email, String password) {
+            mUserName = email;
+            mPassword = password;
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            user = new UserInfo(mUserName, mPassword,false);
+            // perform Login
+           return mDbHelper.verifyPassword(mUserName, mPassword);
 
-            if(APPEnv.DEBUG){
-                Log.e(TAG, "Register user:"+ mUserName + " password: "+mPassword);
-            }
-            final long registerResult = mDbHelper.createUser(user);
-            if(registerResult == -1){// error returned if the db returns -1
-                return false;
-            }else{
-                return true;
-            }
         }
 
         @Override
@@ -223,12 +229,9 @@ public class RegisterActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), NoteListActivity.class);
                 startActivity(intent);
                 finish();
-            }else{
-                if(APPEnv.DEBUG){
-                    Log.e(TAG, "Error registering user!");
-                }
-
-                mUserNameView.setError(getString(R.string.error_field_required));
+            } else {
+                mPasswordView.setError(getString(R.string.error_incorrect_user));
+                mPasswordView.requestFocus();
             }
         }
 
@@ -238,6 +241,5 @@ public class RegisterActivity extends AppCompatActivity {
             showProgress(false);
         }
     }
-
 }
 

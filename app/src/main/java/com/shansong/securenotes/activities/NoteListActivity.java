@@ -1,4 +1,4 @@
-package com.shansong.securenotes;
+package com.shansong.securenotes.activities;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -18,9 +18,10 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.shansong.securenotes.R;
 import com.shansong.securenotes.adapters.NotesAdapter;
 import com.shansong.securenotes.database.DatabaseHelper;
-import com.shansong.securenotes.helpers.DividerItemDecoration;
+import com.shansong.securenotes.utils.DividerItemDecoration;
 import com.shansong.securenotes.models.SecureNote;
 import com.shansong.securenotes.utils.APPEnv;
 
