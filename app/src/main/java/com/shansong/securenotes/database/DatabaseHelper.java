@@ -41,15 +41,15 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
     public static final String S_TABLE_SECURE_NOTES_NAME = "__2";//this is public, because it is used for the content provider
 
     // Common column names
-    private static final String KEY_USERNAME = "username";
+    public static final String KEY_USERNAME = "username";
 
     //UserInfo Table - column names
-    private static final String KEY_PASSWORD = "password";
+    public static final String KEY_PASSWORD = "password";
     private static final String KEY_IS_LOGGEDIN = "loggedin";
 
     //SecureNote Table - column names
     private static final String KEY_ID = "id";
-    private static final String KEY_TITLE = "title";
+    public static final String KEY_TITLE = "title";
     private static final String KEY_CONTENT = "content";
     private static final String KEY_CREATED_AT = "created_at";
 
@@ -259,7 +259,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
     /**
      * Verify the mPassword for login.
      */
-    public boolean verifyPassword(final String userName, final String password ) {
+    public boolean verifyPassword(final String userName, final String password, final boolean updateUserLoginState ) {
         boolean isSuccess = false;
         Cursor cursor = null;
         try {
@@ -268,26 +268,28 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
                 SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
 
                 //get the pw for the specific user
-                final String selectQuery = "SELECT " + KEY_PASSWORD + " FROM " + S_TABLE_USER_INFO_NAME
-                        +" WHERE "+ KEY_USERNAME +"=" + "'"+userName+"'";
+                final String selectQuery = "SELECT *" +" FROM " + S_TABLE_USER_INFO_NAME
+                        +" WHERE "+ KEY_USERNAME +"=" + "'"+userName+"'" +" AND "+KEY_PASSWORD + "=" + "'"+password+"'" ;
                 if(APPEnv.DEBUG){
-                    Log.e(TAG, "getLoggedInState SQL Command; "+ selectQuery);
+                    Log.i(TAG, "verifyPassword SQL Command; "+ selectQuery);
                 }
 
-                String sPW = "";
 
                 cursor = db.rawQuery(selectQuery, null);
                 if(cursor.getCount() > 0) {
-                    cursor.moveToFirst();
-                    sPW = cursor.getString(cursor.getColumnIndex(KEY_PASSWORD));
+                    isSuccess = true;
+
+                    if(APPEnv.DEBUG){
+                        Log.i(TAG, "verifyPassword successful! ");
+                    }
                 }
 
-                //verify the pw
-                isSuccess = sPW.equals(password);
+                if(updateUserLoginState){
+                    ContentValues values = new ContentValues();
+                    values.put(KEY_IS_LOGGEDIN, isSuccess);
+                    db.update(S_TABLE_USER_INFO_NAME, values, KEY_USERNAME + " = ?", new String[] { userName });
+                }
 
-                ContentValues values = new ContentValues();
-                values.put(KEY_IS_LOGGEDIN, isSuccess);
-                db.update(S_TABLE_USER_INFO_NAME, values, KEY_USERNAME + " = ?", new String[] { userName });
             }
         }finally {
             if(cursor != null){
@@ -297,6 +299,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
         return isSuccess;
     }
+
 
     /**
      * Logout user

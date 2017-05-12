@@ -1,4 +1,4 @@
-package com.shansong.securenotes.activities;
+package com.shansong.securenotes;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 
-import com.shansong.securenotes.R;
 import com.shansong.securenotes.models.SecureNote;
 import com.shansong.securenotes.database.DatabaseHelper;
 import com.shansong.securenotes.utils.APPEnv;
@@ -80,7 +79,6 @@ public class AddNotes extends AppCompatActivity {
                     Intent intent = new Intent(getApplicationContext(), NoteListActivity.class);
                     startActivity(intent);
                     finish();
-
 
                 }
             }

@@ -5,11 +5,13 @@ android {
     buildToolsVersion "25.0.0"
 
     defaultConfig {
-        applicationId "com.shansong.securenotes"
+        applicationId "com.gemalto.mfs.contentprovidertestapp"
         minSdkVersion 19
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
     buildTypes {
@@ -18,7 +20,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
 }
 
 dependencies {
@@ -27,6 +28,4 @@ dependencies {
     compile 'com.android.support:design:25.0.1'
     compile 'com.android.support:recyclerview-v7:25.0.1'
     compile 'de.hdodenhof:circleimageview:2.1.0'
-    compile 'net.zetetic:android-database-sqlcipher:3.5.7@aar'
-
 }

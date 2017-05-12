@@ -1,4 +1,4 @@
-package com.shansong.securenotes;
+package com.shansong.securenotes.provider;
 
 
 import android.content.ContentProvider;
@@ -24,7 +24,7 @@ public class TitleListProvider extends ContentProvider {
     private static HashMap<String, String> NOTES_PROJECTION_MAP;
 
 
-    private static final String AUTHORITY = "com.shansong.securenotes.TitleListProvider";
+    private static final String AUTHORITY = "com.shansong.securenotes.provider.TitleListProvider";
     private static final String BASE_PATH = "/titlelist";
     static final String URL = "content://" + AUTHORITY + BASE_PATH;
     static final Uri CONTENT_URI = Uri.parse(URL);
@@ -50,28 +50,49 @@ public class TitleListProvider extends ContentProvider {
 
         queryBuilder.setTables(mDbHelper.S_TABLE_SECURE_NOTES_NAME);
 
+        projection = new String[]{mDbHelper.KEY_TITLE};//only the titles can be retrieved by other applications
+
+        final String userName = selectionArgs[0];
+        final String password = selectionArgs[1];
+
         if(uriMatcher.match(uri)==NOTE_TITLES) {
-            queryBuilder.setProjectionMap(NOTES_PROJECTION_MAP);
+            queryBuilder.appendWhere( mDbHelper.KEY_USERNAME + "=" + "'"+userName+"'");
         }
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase(mDbHelper.getSecurePassword());
-        final Cursor cursor = queryBuilder.query(db, projection,selection,
-                selectionArgs,null, null, sortOrder);
-        /**
-         * register to watch a content URI for changes
-         */
-        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
+
+        Cursor cursor = null;
+        if(mDbHelper.verifyPassword(userName, password, false)){//only when verification is successful, we will
+
+            if(APPEnv.DEBUG){
+                Log.i(TAG, "proceed to retrieve the title list ");
+            }
+            // proceed to retrieve the title list
+
+            cursor = queryBuilder.query(db, projection, null, null, null, null, sortOrder);
+
+            if(APPEnv.DEBUG){
+                Log.i(TAG, "cursor.getcount: "+cursor.getCount());
+            }
+            /**
+             * register to watch a content URI for changes
+             */
+            cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
+        }
+
         return cursor;
-
-
     }
     
     @Override
     public String getType(Uri uri) {
-        if(APPEnv.DEBUG){
-            Log.d(TAG, "Not supported");
+        switch (uriMatcher.match(uri)) {
+            case NOTE_TITLES:
+                return "vnd.android.cursor.dir/titlelist";
+            default:
+                throw new IllegalArgumentException("This is an Unknown URI " + uri);
         }
-        return null;
     }
 
     @Override

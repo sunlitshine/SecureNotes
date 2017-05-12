@@ -1,4 +1,4 @@
-package com.shansong.securenotes.activities;
+package com.shansong.securenotes;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,7 +11,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import com.shansong.securenotes.R;
 import com.shansong.securenotes.models.SecureNote;
 import com.shansong.securenotes.database.DatabaseHelper;
 import com.shansong.securenotes.utils.APPEnv;
