@@ -12,26 +12,39 @@ android {
         versionName "1.0"
 
     }
+
+    signingConfigs {
+        release {
+            storeFile file('../keystore.jks')
+            storePassword '12345678'
+            keyAlias 'keystore'
+            keyPassword '12345678'
+        }
+    }
+
     buildTypes {
 
         debug {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
+
+
 
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:25.0.1'
     compile 'com.android.support:design:25.0.1'
     compile 'com.android.support:recyclerview-v7:25.0.1'
     compile 'de.hdodenhof:circleimageview:2.1.0'
     compile 'net.zetetic:android-database-sqlcipher:3.5.7@aar'
-
 }

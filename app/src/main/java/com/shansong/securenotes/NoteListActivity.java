@@ -236,4 +236,9 @@ public class NoteListActivity extends AppCompatActivity implements View.OnClickL
 
         }
     }
+
+    @Override
+    public void onBackPressed(){
+        //disable the back btn
+    }
 }

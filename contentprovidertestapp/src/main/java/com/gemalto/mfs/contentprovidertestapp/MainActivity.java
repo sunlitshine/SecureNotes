@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         Cursor mCursor = getContentResolver().query(CONTENT_URI, null, null, selectionArgs, null, null);
 
         List<String> titles = new ArrayList<>();
-        if(mCursor !=null && mCursor.getCount()>1){
+        if(mCursor !=null && mCursor.getCount()> 0){
 
             if (mCursor.moveToFirst()) {
                 do {
