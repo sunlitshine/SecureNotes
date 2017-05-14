@@ -64,12 +64,14 @@
 
             <Button
                 android:id="@+id/login_button"
-                style="?android:textAppearanceSmall"
+                style="?android:textAppearanceMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/action_sign_in"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:background="@color/colorDivider"
+                />
 
             <TextView android:id="@+id/link_to_register"
                 android:layout_width="fill_parent"
@@ -79,7 +81,7 @@
                 android:text="@string/action_register"
                 android:gravity="center"
                 android:textSize="20dp"
-                android:textColor="#e5a316"/>
+                android:textColor="@color/colorPrimaryDark"/>
 
         </LinearLayout>
     </ScrollView>

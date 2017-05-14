@@ -1,15 +1,20 @@
 package com.gemalto.mfs.contentprovidertestapp;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -54,7 +59,26 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 final String userName = usernameEditView.getText().toString();
                 final String password = passwordEditView.getText().toString();
-                retrieveTitleList(userName, password);
+
+
+                if(!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(password) && password.length()>=6){
+                    retrieveTitleList(userName, password);
+                }else{
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Error");
+                    builder.setMessage("Invalid length for the username or password");
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                            usernameEditView.requestFocus();
+
+                        }
+                    });
+                    builder.setNegativeButton("Cancel", null);
+                    builder.show();
+                }
+
 
             }
         });
@@ -62,13 +86,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void retrieveTitleList(final String userName, final String password){
 
-        String[] selectionArgs = new String[]{"shanshan", "123456"};
-        //String[] selectionArgs = new String[]{userName, password};
+        String[] selectionArgs = new String[]{userName, password};
         Cursor mCursor = getContentResolver().query(CONTENT_URI, null, null, selectionArgs, null, null);
 
-
+        List<String> titles = new ArrayList<>();
         if(mCursor !=null && mCursor.getCount()>1){
-            List<String> titles = new ArrayList<>();
+
             if (mCursor.moveToFirst()) {
                 do {
                     String title = mCursor.getString(mCursor.getColumnIndex(KEY_TITLE));
@@ -77,15 +100,21 @@ public class MainActivity extends AppCompatActivity {
                 } while (mCursor.moveToNext());
 
             }
-
-            titleListAdapter = new NotesAdapter(titles);
-            noteListView.setAdapter(titleListAdapter);
-            titleListAdapter.notifyDataSetChanged();
-
             mCursor.close();
+
         }else{
             Toast.makeText(MainActivity.this, "Empty Title List ", Toast.LENGTH_LONG).show();
         }
 
+        titleListAdapter = new NotesAdapter(titles);
+        noteListView.setAdapter(titleListAdapter);
+        titleListAdapter.notifyDataSetChanged();
+
+        // Check if no view has focus:
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }

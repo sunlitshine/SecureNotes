@@ -16,7 +16,8 @@
         android:text="Content provider Test App"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:textSize="30dp" />
+        android:textSize="20dp"
+        android:textStyle="bold"/>
 
     <EditText
         android:id="@+id/username_editText"
@@ -41,6 +42,7 @@
         android:layout_alignRight="@+id/username_editText"
         android:layout_alignEnd="@+id/username_editText"
         android:hint="Password"
+        android:inputType="numberPassword"
         android:textColorHint="@android:color/holo_blue_bright" />
 
     <Button
@@ -49,7 +51,8 @@
         android:layout_height="wrap_content"
         android:text="Retrive Title List"
         android:layout_below="@+id/password_editText"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        />
 
     <RelativeLayout
         android:id="@+id/title_list_view"

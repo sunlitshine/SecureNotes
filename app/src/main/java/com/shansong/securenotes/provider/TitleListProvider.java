@@ -26,8 +26,6 @@ public class TitleListProvider extends ContentProvider {
 
     private static final String AUTHORITY = "com.shansong.securenotes.provider.TitleListProvider";
     private static final String BASE_PATH = "/titlelist";
-    static final String URL = "content://" + AUTHORITY + BASE_PATH;
-    static final Uri CONTENT_URI = Uri.parse(URL);
 
     static final int NOTE_TITLES = 1;
 
