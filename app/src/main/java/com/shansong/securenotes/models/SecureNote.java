@@ -1,7 +1,7 @@
 package com.shansong.securenotes.models;
 
 /**
- * Created by sunshine on 7/5/17.
+ * A class used to manage the note object
  */
 
 public final class SecureNote {

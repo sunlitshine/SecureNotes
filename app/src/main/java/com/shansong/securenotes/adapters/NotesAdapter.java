@@ -11,9 +11,6 @@ import com.shansong.securenotes.models.SecureNote;
 
 import java.util.List;
 
-/**
- * Created by bolorundurowb on 16-Jul-16.
- */
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.MyViewHolder> {
     private List<SecureNote> mNoteList;
 

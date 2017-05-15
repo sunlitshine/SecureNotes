@@ -1,10 +1,6 @@
 package com.shansong.securenotes.models;
 
 
-/**
- * Created by sunshine on 7/5/17.
- */
-
 public class UserInfo {
     private String mUserName;
     private String mPassword;
