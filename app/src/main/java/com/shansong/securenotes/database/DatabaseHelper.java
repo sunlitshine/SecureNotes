@@ -552,19 +552,6 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
         return titleList;
     }
-    // loading native module/lib
-    static {
-        try {
-            if(APPEnv.DEBUG) {
-                Log.i(TAG, "Load securepassword native lib");
-            }
-            System.loadLibrary("securepassword");
-        } catch (UnsatisfiedLinkError ule) {
-            if(APPEnv.DEBUG) {
-                Log.e(TAG, "WARNING: Could not load native library: " + ule.getMessage());
-            }
-        }
-    }
 
 
     /**
