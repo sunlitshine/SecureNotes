@@ -11,6 +11,7 @@ import com.shansong.securenotes.utils.APPEnv;
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
+import net.sqlcipher.database.SQLiteStatement;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 
 
-    public static DatabaseHelper getInstance(final Context context){
+    public static synchronized DatabaseHelper getInstance(final Context context){
         if(instance ==null){
             mContext = context;
             instance = new DatabaseHelper(context.getApplicationContext());
@@ -261,46 +262,56 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
      */
     public boolean verifyPassword(final String userName, final String password, final boolean updateUserLoginState ) {
         boolean isSuccess = false;
-        Cursor cursor = null;
-        try {
-            if(checkIfUserExists(userName)){
 
-                SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
+        if(checkIfUserExists(userName)){
 
-                //get the pw for the specific user
-                final String selectQuery = "SELECT *" +" FROM " + S_TABLE_USER_INFO_NAME
-                        +" WHERE "+ KEY_USERNAME +"=" + "'"+userName+"'" +" AND "+KEY_PASSWORD + "=" + "'"+password+"'" ;
+            SQLiteDatabase db = this.getWritableDatabase(getSecurePassword());
+
+            //get the pw for the specific user
+            final String selectQuery = "SELECT COUNT(*)" +" FROM " + S_TABLE_USER_INFO_NAME
+                    +" WHERE "+ KEY_USERNAME +"=?" +" AND "+KEY_PASSWORD + "=?" ;
+            if(APPEnv.DEBUG){
+                Log.i(TAG, "verifyPassword SQL Command; "+ selectQuery);
+            }
+
+            final SQLiteStatement statement = db.compileStatement(selectQuery);
+
+            statement.bindString(1, userName);//it is 1 index based
+            statement.bindString(2, password);
+
+            final long number= statement.simpleQueryForLong();
+            if(APPEnv.DEBUG) {
+                Log.i(TAG, "number:" + number);
+            }
+
+            if(number > 0) {
+                isSuccess = true;
+
                 if(APPEnv.DEBUG){
-                    Log.i(TAG, "verifyPassword SQL Command; "+ selectQuery);
+                    Log.i(TAG, "verifyPassword successful! ");
                 }
-
-
-                cursor = db.rawQuery(selectQuery, null);
-                if(cursor.getCount() > 0) {
-                    isSuccess = true;
-
-                    if(APPEnv.DEBUG){
-                        Log.i(TAG, "verifyPassword successful! ");
-                    }
-                }
-
-                if(updateUserLoginState){
-                    ContentValues values = new ContentValues();
-                    values.put(KEY_IS_LOGGEDIN, isSuccess);
-                    db.update(S_TABLE_USER_INFO_NAME, values, KEY_USERNAME + " = ?", new String[] { userName });
-                }
-
             }
-        }finally {
-            if(cursor != null){
-                cursor.close();
+
+            if(updateUserLoginState){
+
+                final String sql = "UPDATE "+S_TABLE_USER_INFO_NAME +" SET "+ KEY_IS_LOGGEDIN +" =? WHERE "+ KEY_USERNAME+" =?";
+                final SQLiteStatement updateStmt = db.compileStatement(sql);
+
+                final int login = isSuccess ? 1: 0;
+                statement.bindLong(1, login);
+                statement.bindString(2, userName);
+
+                updateStmt.executeUpdateDelete();
+
+                if(APPEnv.DEBUG){
+                    Log.i(TAG, "Update user login state");
+                }
             }
+
         }
 
         return isSuccess;
     }
-
-
     /**
      * Logout user
      */

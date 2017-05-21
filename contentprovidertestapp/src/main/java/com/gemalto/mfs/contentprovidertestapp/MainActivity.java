@@ -57,8 +57,8 @@ public class MainActivity extends AppCompatActivity {
         refreshBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final String userName = usernameEditView.getText().toString();
-                final String password = passwordEditView.getText().toString();
+                final String userName = usernameEditView.getText().toString().trim();
+                final String password = passwordEditView.getText().toString().trim();
 
 
                 if(!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(password) && password.length()>=6){

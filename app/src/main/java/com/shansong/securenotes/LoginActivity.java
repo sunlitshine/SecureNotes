@@ -3,6 +3,7 @@ package com.shansong.securenotes;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -44,7 +45,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
     private View mLoginFormView;
     private TextView mRegsiterView;
 
-    private DatabaseHelper mDbHelper;
+    private static DatabaseHelper mDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +59,10 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
         }
 
         //load sqlcipher native libraries
-        SQLiteDatabase.loadLibs(this);
-        mDbHelper = DatabaseHelper.getInstance(getApplicationContext());
+        Context mContext = getApplicationContext();
+        SQLiteDatabase.loadLibs(mContext);
+        mDbHelper = DatabaseHelper.getInstance(mContext);
+
 
         final String activeUser= mDbHelper.getCurrentUserName();
 
